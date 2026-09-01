@@ -74,6 +74,8 @@ export interface ReactorDataPoint {
 
 // ─── Attacker state ───────────────────────────────────────────────────────────
 
+declare module '*.css';
+
 export type AttackPhase =
   | "idle"
   | "recon"
@@ -94,6 +96,11 @@ export interface AttackEvent {
 export interface IncidentLog {
   id?: string;
   created_at?: string;
+  detected_at: string;
+  responded_at: string;
+  mitre_tactic: string;
+  source_ip: string;
+  target_ip: string;
   mode: "safecut" | "quarantine";
   compromised_node: string;
   cut_edges: CutEdge[];
@@ -101,4 +108,6 @@ export interface IncidentLog {
   solve_time_ms: number;
   safety_loops_preserved: number;
   reactor_stable: boolean;
+  reactor_curve?: ReactorDataPoint[];
 }
+

@@ -39,13 +39,24 @@ export default function DefenderConsole({
 
       {/* ── Threat alert banner ── */}
       {threatDetected && !isContained && (
-        <div className="glass-red rounded-xl p-3 flex items-center gap-3 animate-slide-in relative overflow-hidden threat-scan">
-          <div className="text-xl animate-pulse">⚠️</div>
-          <div>
-            <p className="text-sm font-bold text-accent-red">INTRUSION DETECTED</p>
-            <p className="text-xs text-text-secondary font-mono">
-              Unauthorized Modbus write to protected register · Node compromised
-            </p>
+        <div className="glass-red rounded-xl p-4 flex flex-col gap-3 animate-slide-in relative overflow-hidden threat-scan border border-accent-red/30">
+          <div className="flex items-center gap-3">
+            <div className="text-2xl animate-pulse">⚠️</div>
+            <div>
+              <p className="text-sm font-bold text-accent-red">INTRUSION DETECTED</p>
+              <p className="text-xs text-text-secondary font-mono">
+                Unauthorized Modbus write to protected register
+              </p>
+            </div>
+          </div>
+          
+          <div className="bg-bg-surface/50 border border-accent-red/20 rounded-lg p-2 flex items-center justify-between mt-1">
+            <div className="text-[10px] font-mono text-text-muted">Target IP Match:</div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono text-accent-amber line-through opacity-70">EXTERNAL</span>
+              <span className="text-accent-red">→</span>
+              <span className="text-[11px] font-mono text-accent-red font-bold">192.168.10.102 (PLC_02)</span>
+            </div>
           </div>
         </div>
       )}

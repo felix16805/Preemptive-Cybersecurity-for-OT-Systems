@@ -98,25 +98,55 @@ export default function NetworkTopology({ graph, compromisedNode, cutEdges, atta
     const container = svg.append("g");
 
     // ── Edges ────────────────────────────────────────────────────────────
-    const link = container
-      .append("g")
-      .selectAll("line")
-      .data(links)
-      .join("line")
-      .attr("stroke-width", (d) => (d.isSafetyLoop ? 2.5 : 1.5))
-      .attr("stroke-dasharray", (d) => (d.isSafetyLoop ? "6 3" : "none"))
+    const linkG = container.append("g").selectAll("g").data(links).join("g");
+    
+    const link = linkG
+      .append("line")
+      .attr("stroke-width", (d) => {
+        const key = `${(d.source as any).id ?? d.source}:${(d.target as any).id ?? d.target}`;
+        if (cutSet.has(key)) return 3;
+        return d.isSafetyLoop ? 2.5 : 1.5;
+      })
+      .attr("stroke-dasharray", (d: any) => {
+        const key = `${(d.source as any).id ?? d.source}:${(d.target as any).id ?? d.target}`;
+        if (attackPathSet.has(key)) return "6 4";
+        return d.isSafetyLoop ? "6 3" : "none";
+      })
       .attr("stroke", (d: any) => {
         const key = `${(d.source as any).id ?? d.source}:${(d.target as any).id ?? d.target}`;
         if (cutSet.has(key)) return "#ef4444";
-        if (attackPathSet.has(key)) return "#f59e0b";
-        if (d.isSafetyLoop) return "#22d3ee";
+        if (attackPathSet.has(key)) return "#ef4444";
+        if (d.isSafetyLoop) return mode === "safecut" ? "#4ade80" : "#22d3ee";
         return "#334155";
       })
       .attr("opacity", (d: any) => {
         const key = `${(d.source as any).id ?? d.source}:${(d.target as any).id ?? d.target}`;
-        if (cutSet.has(key)) return 0.9;
+        if (cutSet.has(key)) return 1;
         return 0.7;
+      })
+      .attr("class", (d: any) => {
+        const key = `${(d.source as any).id ?? d.source}:${(d.target as any).id ?? d.target}`;
+        if (cutSet.has(key)) return "animate-snap-fade";
+        if (attackPathSet.has(key)) return "animate-dash-flow";
+        if (d.isSafetyLoop && mode === "safecut") return "animate-pulse-green-once";
+        return "";
       });
+
+    // ── Cut Edge 'X' Glyphs ──────────────────────────────────────────────
+    const cutX = linkG
+      .filter((d: any) => {
+        const key = `${(d.source as any).id ?? d.source}:${(d.target as any).id ?? d.target}`;
+        return cutSet.has(key);
+      })
+      .append("text")
+      .text("✕")
+      .attr("fill", "#ef4444")
+      .attr("font-size", "16")
+      .attr("font-weight", "bold")
+      .attr("text-anchor", "middle")
+      .attr("dominant-baseline", "central")
+      .attr("opacity", 0)
+      .attr("class", "animate-fade-in");
 
     // ── Nodes ────────────────────────────────────────────────────────────
     const nodeG = container
@@ -125,6 +155,17 @@ export default function NetworkTopology({ graph, compromisedNode, cutEdges, atta
       .data(nodes)
       .join("g")
       .attr("cursor", "pointer");
+
+    // Isolation boundary
+    nodeG
+      .append("circle")
+      .attr("r", 32)
+      .attr("fill", "none")
+      .attr("stroke", "#ef4444")
+      .attr("stroke-width", 1)
+      .attr("stroke-dasharray", "4 4")
+      .attr("opacity", (d) => (d.id === compromisedNode && (mode === "safecut" || mode === "quarantine") ? 0.6 : 0))
+      .attr("class", (d) => (d.id === compromisedNode && (mode === "safecut" || mode === "quarantine") ? "animate-fade-in animate-dash-flow" : ""));
 
     // Outer ring
     nodeG
@@ -137,7 +178,8 @@ export default function NetworkTopology({ graph, compromisedNode, cutEdges, atta
         return "transparent";
       })
       .attr("stroke-width", (d) => (d.id === compromisedNode ? 3 : 2))
-      .attr("opacity", 0.6)
+      .attr("opacity", 0.8)
+      .attr("class", (d) => (d.id === compromisedNode ? "animate-pulse-red" : ""))
       .attr("filter", (d) => (d.id === compromisedNode ? "url(#attack-glow)" : d.isSafetyCritical ? "url(#safety-glow)" : "none"));
 
     // Main circle
@@ -205,11 +247,16 @@ export default function NetworkTopology({ graph, compromisedNode, cutEdges, atta
         .attr("y1", (d: any) => d.source.y)
         .attr("x2", (d: any) => d.target.x)
         .attr("y2", (d: any) => d.target.y);
+      
+      cutX
+        .attr("x", (d: any) => (d.source.x + d.target.x) / 2)
+        .attr("y", (d: any) => (d.source.y + d.target.y) / 2);
+
       nodeG.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
     });
 
     return () => { sim.stop(); };
-  }, [graph, compromisedNode, cutEdges, attackPath, dimensions]);
+  }, [graph, compromisedNode, cutEdges, attackPath, dimensions, mode]);
 
   return (
     <div className="relative w-full h-full">
