@@ -38,15 +38,29 @@ module.exports = {
         mono: ["JetBrains Mono", "Fira Code", "monospace"],
       },
       animation: {
-        "pulse-red": "pulse-red 1.5s ease-in-out infinite",
+        "pulse-red": "pulse-red 0.6s ease-out infinite",
         "glow-cyan": "glow-cyan 2s ease-in-out infinite",
         "slide-in":  "slide-in 0.4s ease-out",
         "fade-in":   "fade-in 0.6s ease-out",
+        "dash-flow": "dash-flow 1s linear infinite",
+        "snap-fade": "snap-fade 0.5s ease-out forwards",
+        "pulse-green-once": "pulse-green-once 1s ease-out forwards",
       },
       keyframes: {
         "pulse-red": {
-          "0%, 100%": { boxShadow: "0 0 0 0 rgba(239,68,68,0.4)" },
-          "50%":      { boxShadow: "0 0 0 8px rgba(239,68,68,0)" },
+          "0%": { boxShadow: "0 0 0 0 rgba(239,68,68,0.7)" },
+          "100%": { boxShadow: "0 0 0 12px rgba(239,68,68,0)" },
+        },
+        "pulse-green-once": {
+          "0%": { boxShadow: "0 0 0 0 rgba(74,222,128,0.8)" },
+          "100%": { boxShadow: "0 0 0 15px rgba(74,222,128,0)" },
+        },
+        "dash-flow": {
+          "to": { strokeDashoffset: "-10" }
+        },
+        "snap-fade": {
+          "0%": { opacity: "1", strokeWidth: "4" },
+          "100%": { opacity: "0", strokeWidth: "0" }
         },
         "glow-cyan": {
           "0%, 100%": { boxShadow: "0 0 8px rgba(34,211,238,0.3)" },

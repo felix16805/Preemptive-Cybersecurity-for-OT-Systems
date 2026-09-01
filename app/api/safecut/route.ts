@@ -48,6 +48,11 @@ export async function POST(req: Request) {
 
     // 5. Log to Supabase (non-blocking)
     logIncident({
+      detected_at: new Date(Date.now() - 5000).toISOString(), // Simulated 5s ago
+      responded_at: new Date().toISOString(),
+      mitre_tactic: "Initial Access / Execution",
+      source_ip: "EXTERNAL",
+      target_ip: "192.168.10.102",
       mode: "safecut",
       compromised_node: compromisedNode,
       cut_edges: solverOutput.cutEdges,

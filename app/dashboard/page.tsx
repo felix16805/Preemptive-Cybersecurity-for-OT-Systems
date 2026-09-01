@@ -2,14 +2,14 @@
 
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import type { SafeCutResult, AttackEvent, AttackPhase, CutEdge } from "@/types";
 import { OT_TOPOLOGY } from "@/lib/ot-topology";
 import { generateComparisonData } from "@/lib/cstr-model";
 import AttackerConsole from "@/components/AttackerConsole";
 import DefenderConsole from "@/components/DefenderConsole";
 import CertificatePanel from "@/components/CertificatePanel";
-import TechStackSlide from "@/components/TechStackSlide";
+import SharedNav from "@/components/SharedNav";
+import SharedFooter from "@/components/SharedFooter";
 
 // D3 must be client-side only
 const NetworkTopology = dynamic(() => import("@/components/NetworkTopology"), { ssr: false });
@@ -17,15 +17,6 @@ const ReactorChart    = dynamic(() => import("@/components/ReactorChart"),    { 
 
 // Pre-generate CSTR data once
 const { safecutData, quarantineData } = generateComparisonData();
-
-// Attack sequence timing (ms)
-const ATTACK_SEQUENCE: Array<{ delay: number; phase: AttackPhase; desc: string; node?: string }> = [
-  { delay: 800,  phase: "recon",            desc: "Scanning OT subnet (nmap -sV --script=modbus-discover)" },
-  { delay: 2200, phase: "exploitation",     desc: "[!] Vulnerability found on PLC_02 port 502 (Modbus/TCP)" },
-  { delay: 3600, phase: "lateral_movement", desc: "[!] Lateral movement: PLC_02 → PLC_01" },
-  { delay: 4800, phase: "lateral_movement", desc: "[!] Lateral movement: PLC_02 → TEMP_SENSOR" },
-  { delay: 5800, phase: "impact",           desc: "[CRITICAL] Unauthorized write to process register 40001" },
-];
 
 export default function DashboardPage() {
   const [phase,           setPhase]           = useState<AttackPhase>("idle");
@@ -56,6 +47,7 @@ export default function DashboardPage() {
 
   // ── Launch attack sequence ────────────────────────────────────────────────
   const handleAttackStart = useCallback((targetNode: string) => {
+    // This will be invoked by the new Command Console when it executes 'exploit'
     clearTimers();
     setResult(null);
     setAlertSent(false);
@@ -64,22 +56,38 @@ export default function DashboardPage() {
     setChartMode("idle");
     setAttackPath([]);
 
-    ATTACK_SEQUENCE.forEach(({ delay, phase, desc }) => {
-      const t = setTimeout(() => {
-        setPhase(phase);
-        addEvent(phase, desc);
-        if (phase === "lateral_movement") {
-          setAttackPath((prev) => {
-            if (prev.length === 0) return [targetNode, "PLC_01"];
-            return [...prev, "TEMP_SENSOR"];
-          });
-        }
-        if (phase === "exploitation") {
-          setCompromisedNode(targetNode);
-        }
-      }, delay);
-      timers.current.push(t);
-    });
+    // The sequence is now driven by the console commands, but if we need a scripted auto-sequence:
+    // (We will move this logic partly to the console or keep it here and let the console trigger phases)
+    // For now, let's just trigger detection.
+    setPhase("exploitation");
+    setCompromisedNode(targetNode);
+    addEvent("exploitation", `[CRITICAL] Unauthorized access detected on ${targetNode}`);
+    
+    // Trigger the initial detection email alert
+    fetch("/api/alert", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nodeId: targetNode, ip: "192.168.10.102" })
+    }).catch(console.error);
+    
+    // Simulate lateral movement automatically after exploit (as before)
+    const t1 = setTimeout(() => {
+      setPhase("lateral_movement");
+      setAttackPath([targetNode, "PLC_01"]);
+      addEvent("lateral_movement", `[!] Lateral movement: ${targetNode} → PLC_01`);
+    }, 2000);
+    
+    const t2 = setTimeout(() => {
+      setAttackPath([targetNode, "PLC_01", "TEMP_SENSOR"]);
+      addEvent("lateral_movement", `[!] Lateral movement: ${targetNode} → TEMP_SENSOR`);
+    }, 4000);
+
+    const t3 = setTimeout(() => {
+      setPhase("impact");
+      addEvent("impact", `[CRITICAL] Unauthorized write to process register`);
+    }, 6000);
+
+    timers.current.push(t1, t2, t3);
   }, [addEvent]);
 
   // ── SafeCut response ──────────────────────────────────────────────────────
@@ -144,32 +152,32 @@ export default function DashboardPage() {
     setChartMode("idle");
   }, []);
 
-  // Show comparison chart when both are available
   const handleShowBoth = () => setChartMode("both");
 
   useEffect(() => () => clearTimers(), []);
 
   return (
     <div className="min-h-screen bg-bg-base flex flex-col">
-      {/* ── Top nav ── */}
-      <nav className="glass border-b border-white/5 px-6 py-3 flex items-center justify-between sticky top-0 z-40">
-        <div className="flex items-center gap-3">
-          <Link href="/" className="text-accent-cyan font-black text-lg tracking-tight hover:opacity-80 transition-opacity">
-            SafeCut
-          </Link>
-          <span className="text-text-muted text-xs">·</span>
-          <span className="text-xs text-text-muted font-mono">OT Security Dashboard</span>
+      <SharedNav />
+      
+      {/* ── Sub-header ── */}
+      <div className="border-b border-white/5 px-6 py-2 flex items-center justify-between bg-bg-surface/50">
+        <div className="text-xs text-text-muted font-mono flex items-center gap-4">
+          <span>Live Simulation Environment</span>
+          <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-accent-amber/30 bg-accent-amber/10 text-[10px] font-semibold text-accent-amber uppercase tracking-wider">
+            No Real Network Access
+          </span>
         </div>
         <div className="flex items-center gap-3">
           {chartMode !== "idle" && (
             <button
               onClick={handleShowBoth}
-              className="text-xs px-3 py-1.5 rounded-lg border border-accent-cyan/30 text-accent-cyan hover:bg-accent-cyan/10 transition-all font-semibold"
+              className="text-xs px-3 py-1 rounded-lg border border-accent-cyan/30 text-accent-cyan hover:bg-accent-cyan/10 transition-all font-semibold"
             >
               Compare Both
             </button>
           )}
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border ${
+          <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase border ${
             phase === "idle"      ? "border-text-muted/20 text-text-muted"       :
             phase === "contained" ? "border-accent-green/30 text-accent-green"   :
                                    "border-accent-red/30 text-accent-red"
@@ -179,57 +187,25 @@ export default function DashboardPage() {
               phase === "contained" ? "bg-accent-green"  :
                                      "bg-accent-red animate-pulse"
             }`} />
-            {phase === "idle" ? "SYSTEM NOMINAL" : phase === "contained" ? "CONTAINED" : "THREAT ACTIVE"}
+            {phase === "idle" ? "System Nominal" : phase === "contained" ? "Contained" : "Threat Active"}
           </div>
         </div>
-      </nav>
+      </div>
 
-      {/* ── Main split ── */}
-      <div className="flex-1 grid grid-cols-1 xl:grid-cols-2 gap-0 min-h-0">
+      {/* ── Main split (60/40 Defender First) ── */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-0 min-h-0">
 
-        {/* ═══ LEFT — RED TEAM ═══ */}
-        <div className="border-r border-white/5 flex flex-col min-h-0">
+        {/* ═══ LEFT (60%) — BLUE TEAM ═══ */}
+        <div className="lg:col-span-3 border-r border-white/5 flex flex-col min-h-0 order-1">
           {/* Panel header */}
-          <div className="glass-red border-b border-accent-red/10 px-4 py-2 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-accent-red animate-pulse" />
-            <span className="text-xs font-bold tracking-widest uppercase text-accent-red/80">Red Team — Adversary</span>
-          </div>
-
-          <div className="flex-1 flex flex-col gap-0 overflow-hidden">
-            {/* Network topology */}
-            <div style={{ height: "320px" }} className="border-b border-white/5 p-2">
-              <NetworkTopology
-                graph={OT_TOPOLOGY}
-                compromisedNode={compromisedNode}
-                cutEdges={cutEdges}
-                attackPath={attackPath}
-                mode={phase === "idle" ? "idle" : phase === "contained" ? (result?.mode === "safecut" ? "safecut" : "quarantine") : "attacking"}
-              />
-            </div>
-
-            {/* Attacker console */}
-            <div className="flex-1 p-4 overflow-y-auto">
-              <AttackerConsole
-                onAttackStart={handleAttackStart}
-                currentPhase={phase}
-                events={events}
-                compromisedNode={compromisedNode ?? ""}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* ═══ RIGHT — BLUE TEAM ═══ */}
-        <div className="flex flex-col min-h-0">
-          {/* Panel header */}
-          <div className="glass-blue border-b border-accent-cyan/10 px-4 py-2 flex items-center gap-2">
+          <div className="bg-bg-surface/80 border-b border-white/5 px-4 py-2 flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-accent-cyan" />
-            <span className="text-xs font-bold tracking-widest uppercase text-accent-cyan/80">Blue Team — SafeCut Defender</span>
+            <span className="text-[11px] font-bold tracking-widest uppercase text-text-primary">Defender Console</span>
           </div>
 
           <div className="flex-1 flex flex-col gap-0 overflow-hidden">
             {/* Reactor chart */}
-            <div style={{ height: "260px" }} className="border-b border-white/5 p-4">
+            <div style={{ height: "260px" }} className="border-b border-white/5 p-4 bg-bg-base relative">
               <ReactorChart
                 safecutData={safecutData}
                 quarantineData={quarantineData}
@@ -238,8 +214,8 @@ export default function DashboardPage() {
             </div>
 
             {/* Defender + Certificate */}
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-0 overflow-hidden">
-              <div className="p-4 border-r border-white/5 overflow-y-auto">
+            <div className="flex-1 grid grid-cols-1 xl:grid-cols-2 gap-0 overflow-hidden bg-bg-surface/30">
+              <div className="p-4 border-b xl:border-b-0 xl:border-r border-white/5 overflow-y-auto">
                 <DefenderConsole
                   onSafeCut={handleSafeCut}
                   onQuarantine={handleQuarantine}
@@ -259,12 +235,45 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* ═══ RIGHT (40%) — RED TEAM ═══ */}
+        <div className="lg:col-span-2 flex flex-col min-h-0 order-2 bg-bg-base">
+          {/* Panel header */}
+          <div className="bg-bg-surface/80 border-b border-white/5 px-4 py-2 flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${phase !== "idle" && phase !== "contained" ? "bg-accent-red animate-pulse" : "bg-text-muted"}`} />
+            <span className="text-[11px] font-bold tracking-widest uppercase text-text-primary">Attacker Console</span>
+            <span className="ml-auto text-[10px] font-mono text-text-muted px-2 py-0.5 rounded border border-white/10">SIMULATED</span>
+          </div>
+
+          <div className="flex-1 flex flex-col gap-0 overflow-hidden">
+            {/* Network topology */}
+            <div style={{ height: "350px" }} className="border-b border-white/5 p-2 bg-bg-base/50">
+              <NetworkTopology
+                graph={OT_TOPOLOGY}
+                compromisedNode={compromisedNode}
+                cutEdges={cutEdges}
+                attackPath={attackPath}
+                mode={phase === "idle" ? "idle" : phase === "contained" ? (result?.mode === "safecut" ? "safecut" : "quarantine") : "attacking"}
+              />
+            </div>
+
+            {/* Attacker console */}
+            <div className="flex-1 p-4 overflow-y-auto">
+              <AttackerConsole
+                onAttackStart={handleAttackStart}
+                currentPhase={phase}
+                events={events}
+                compromisedNode={compromisedNode ?? ""}
+                addEvent={addEvent}
+                setPhase={setPhase}
+              />
+            </div>
+          </div>
+        </div>
+
       </div>
 
-      {/* ── Tech Stack Slide (bottom) ── */}
-      <div className="border-t border-white/5 p-6">
-        <TechStackSlide />
-      </div>
+      <SharedFooter />
     </div>
   );
 }

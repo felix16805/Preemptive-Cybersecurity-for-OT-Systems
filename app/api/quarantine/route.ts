@@ -38,6 +38,11 @@ export async function POST(req: Request) {
     );
 
     logIncident({
+      detected_at: new Date(Date.now() - 5000).toISOString(),
+      responded_at: new Date().toISOString(),
+      mitre_tactic: "Initial Access / Execution",
+      source_ip: "EXTERNAL",
+      target_ip: "192.168.10.102",
       mode: "quarantine",
       compromised_node: compromisedNode,
       cut_edges: cutEdges,
