@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { fetchTopology } from "@/lib/neo4j";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const topology = await fetchTopology();
