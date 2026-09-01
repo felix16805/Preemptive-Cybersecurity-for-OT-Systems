@@ -11,11 +11,12 @@ interface Props {
   isLoading:   boolean;
   alertSent:   boolean;
   currentPhase: AttackPhase;
+  processingSteps?: string[];
 }
 
 export default function DefenderConsole({
   onSafeCut, onQuarantine, onReset,
-  result, isLoading, alertSent, currentPhase,
+  result, isLoading, alertSent, currentPhase, processingSteps
 }: Props) {
   const threatDetected = currentPhase === "impact" || currentPhase === "lateral_movement";
   const isContained    = currentPhase === "contained";
@@ -91,6 +92,24 @@ export default function DefenderConsole({
           Reset Simulation
         </button>
       </div>
+
+      {/* ── Processing Steps ── */}
+      {isLoading && processingSteps && processingSteps.length > 0 && (
+        <div className="glass rounded-xl p-3 animate-slide-in border border-accent-cyan/30">
+          <p className="text-[10px] text-accent-cyan uppercase tracking-wide font-bold mb-2 flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-accent-cyan animate-pulse"></span>
+            Executing Automated Response...
+          </p>
+          <div className="flex flex-col gap-1.5">
+            {processingSteps.map((step, idx) => (
+              <div key={idx} className="flex items-start gap-2 text-[11px] text-text-secondary font-mono animate-fade-in">
+                <span className="text-accent-cyan opacity-50 mt-0.5">❯</span>
+                <span>{step}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Result metrics ── */}
       {result && (
