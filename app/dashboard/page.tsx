@@ -28,6 +28,7 @@ export default function DashboardPage() {
   const [alertSent,       setAlertSent]       = useState(false);
   const [cutEdges,        setCutEdges]        = useState<CutEdge[]>([]);
   const [chartMode,       setChartMode]       = useState<"idle" | "safecut" | "quarantine" | "both">("idle");
+  const [processingSteps, setProcessingSteps] = useState<string[]>([]);
 
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -55,6 +56,7 @@ export default function DashboardPage() {
     setEvents([]);
     setChartMode("idle");
     setAttackPath([]);
+    setProcessingSteps([]);
 
     // The sequence is now driven by the console commands, but if we need a scripted auto-sequence:
     // (We will move this logic partly to the console or keep it here and let the console trigger phases)
@@ -94,6 +96,14 @@ export default function DashboardPage() {
   const handleSafeCut = useCallback(async () => {
     if (!compromisedNode) return;
     setIsLoading(true);
+    setProcessingSteps(["Initializing SafeCut engine..."]);
+    
+    await new Promise(r => setTimeout(r, 600));
+    setProcessingSteps(prev => [...prev, "Formulating network graph as min-cut problem..."]);
+    
+    await new Promise(r => setTimeout(r, 800));
+    setProcessingSteps(prev => [...prev, "Computing max-flow/min-cut with infinite capacity safety edges..."]);
+    
     try {
       const res = await fetch("/api/safecut", {
         method: "POST",
@@ -101,6 +111,15 @@ export default function DashboardPage() {
         body: JSON.stringify({ compromisedNode }),
       });
       const data: SafeCutResult = await res.json();
+      
+      await new Promise(r => setTimeout(r, 800));
+      setProcessingSteps(prev => [...prev, "Running independent BFS verification on post-cut graph..."]);
+      
+      await new Promise(r => setTimeout(r, 800));
+      setProcessingSteps(prev => [...prev, "Certificate of Safety verified. Deploying firewall rules..."]);
+      
+      await new Promise(r => setTimeout(r, 600));
+      
       setResult(data);
       setCutEdges(data.cutEdges);
       setPhase("contained");
@@ -111,13 +130,22 @@ export default function DashboardPage() {
       console.error("SafeCut API error:", err);
     } finally {
       setIsLoading(false);
+      setProcessingSteps([]);
     }
   }, [compromisedNode, addEvent]);
 
-  // ── Blind quarantine response ─────────────────────────────────────────────
+  // ── Blind Quarantine response ─────────────────────────────────────────────
   const handleQuarantine = useCallback(async () => {
     if (!compromisedNode) return;
     setIsLoading(true);
+    setProcessingSteps(["Initializing SOAR quarantine playbook..."]);
+    
+    await new Promise(r => setTimeout(r, 600));
+    setProcessingSteps(prev => [...prev, "Identifying all active connections to compromised node..."]);
+    
+    await new Promise(r => setTimeout(r, 800));
+    setProcessingSteps(prev => [...prev, "Deploying unconditional 'Deny All' firewall rules..."]);
+    
     try {
       const res = await fetch("/api/quarantine", {
         method: "POST",
@@ -125,6 +153,15 @@ export default function DashboardPage() {
         body: JSON.stringify({ compromisedNode }),
       });
       const data: SafeCutResult = await res.json();
+      
+      await new Promise(r => setTimeout(r, 800));
+      setProcessingSteps(prev => [...prev, "Verifying post-cut topology..."]);
+      
+      await new Promise(r => setTimeout(r, 800));
+      setProcessingSteps(prev => [...prev, "[WARNING] Safety loops severed. Process instability detected."]);
+      
+      await new Promise(r => setTimeout(r, 600));
+
       setResult(data);
       setCutEdges(data.cutEdges);
       setPhase("contained");
@@ -135,6 +172,7 @@ export default function DashboardPage() {
       console.error("Quarantine API error:", err);
     } finally {
       setIsLoading(false);
+      setProcessingSteps([]);
     }
   }, [compromisedNode, addEvent]);
 
@@ -224,6 +262,7 @@ export default function DashboardPage() {
                   isLoading={isLoading}
                   alertSent={alertSent}
                   currentPhase={phase}
+                  processingSteps={processingSteps}
                 />
               </div>
               <div className="p-4 overflow-y-auto">
