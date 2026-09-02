@@ -38,9 +38,9 @@ export default function AboutPage() {
           <h2 className="text-xl font-bold text-accent-cyan mb-8 uppercase tracking-widest text-sm">The Team</h2>
           <div className="grid md:grid-cols-3 gap-6">
             {[
-              { name: "Dipanjan Das", role: "Project Lead / Engineer" },
-              { name: "Austin Minto John", role: "Security Researcher" },
-              { name: "Rishabh Jain", role: "Systems Architect" }
+              { name: "Dipanjan Das", role: "23BCE0131" },
+              { name: "Austin Minto John", role: "23BCE0186" },
+              { name: "Rishabh Jain", role: "23BDS0254" }
             ].map((member) => (
               <div key={member.name} className="glass p-6 rounded-2xl text-center">
                 <h3 className="font-bold text-text-primary text-lg mb-1">{member.name}</h3>
