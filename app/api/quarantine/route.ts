@@ -38,18 +38,15 @@ export async function POST(req: Request) {
     );
 
     logIncident({
-      detected_at: new Date(Date.now() - 5000).toISOString(),
-      responded_at: new Date().toISOString(),
-      mitre_tactic: "Initial Access / Execution",
-      source_ip: "EXTERNAL",
-      target_ip: "192.168.10.102",
-      mode: "quarantine",
-      compromised_node: compromisedNode,
-      cut_edges: cutEdges,
-      certificate,
-      solve_time_ms: solveTimeMs,
+      session_id: "API_QUARANTINE_RUN",
+      threat_node: compromisedNode,
+      threat_ip: "192.168.10.102",
+      safecut_triggered: false,
+      certificate_issued: false,
+      edges_cut: cutEdges.length,
       safety_loops_preserved: result.safetyLoopsPreserved,
-      reactor_stable: false,
+      total_safety_loops: result.totalSafetyLoops,
+      log_messages: ["[QUARANTINE] Blind quarantine applied", "[QUARANTINE] Reactor runaway!"]
     }).catch((err) => console.error("[API/quarantine] Supabase log failed:", err));
 
     return NextResponse.json(result);

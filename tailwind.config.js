@@ -1,84 +1,93 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: ["class"],
   content: [
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
-    "./components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./lib/**/*.{js,ts,jsx,tsx,mdx}",
+    './pages/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
+    './app/**/*.{ts,tsx}',
+    './src/**/*.{ts,tsx}',
   ],
+  prefix: "",
   theme: {
+    container: {
+      center: true,
+      padding: "2rem",
+      screens: {
+        "2xl": "1400px",
+      },
+    },
     extend: {
       colors: {
-        // SafeCut design system
-        bg: {
-          base:    "#0a0a0f",
-          surface: "#0f172a",
-          card:    "#1e293b",
-          hover:   "#334155",
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
         },
         accent: {
-          cyan:    "#22d3ee",
-          red:     "#ef4444",
-          amber:   "#f59e0b",
-          green:   "#4ade80",
-          blue:    "#3b82f6",
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
         },
-        text: {
-          primary:   "#e2e8f0",
-          secondary: "#94a3b8",
-          muted:     "#475569",
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
         },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
+        /* Functional colors specifically for the dashboard/graphs */
         safety: {
-          ok:     "#4ade80",
-          danger: "#ef4444",
-          warn:   "#f59e0b",
-        },
+          ok:     "#1F9D55",
+          danger: "#C43D3D",
+          warn:   "#B4790F",
+        }
+      },
+      borderRadius: {
+        lg: "6px",
+        md: "4px",
+        sm: "2px",
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        mono: ["JetBrains Mono", "Fira Code", "monospace"],
-      },
-      animation: {
-        "pulse-red": "pulse-red 0.6s ease-out infinite",
-        "glow-cyan": "glow-cyan 2s ease-in-out infinite",
-        "slide-in":  "slide-in 0.4s ease-out",
-        "fade-in":   "fade-in 0.6s ease-out",
-        "dash-flow": "dash-flow 1s linear infinite",
-        "snap-fade": "snap-fade 0.5s ease-out forwards",
-        "pulse-green-once": "pulse-green-once 1s ease-out forwards",
+        sans: ["var(--font-plex-sans)", "system-ui", "sans-serif"],
+        display: ["var(--font-general-sans)", "system-ui", "sans-serif"],
+        mono: ["var(--font-plex-mono)", "monospace"],
       },
       keyframes: {
-        "pulse-red": {
-          "0%": { boxShadow: "0 0 0 0 rgba(239,68,68,0.7)" },
-          "100%": { boxShadow: "0 0 0 12px rgba(239,68,68,0)" },
+        "accordion-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
-        "pulse-green-once": {
-          "0%": { boxShadow: "0 0 0 0 rgba(74,222,128,0.8)" },
-          "100%": { boxShadow: "0 0 0 15px rgba(74,222,128,0)" },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
         },
-        "dash-flow": {
-          "to": { strokeDashoffset: "-10" }
-        },
-        "snap-fade": {
-          "0%": { opacity: "1", strokeWidth: "4" },
-          "100%": { opacity: "0", strokeWidth: "0" }
-        },
-        "glow-cyan": {
-          "0%, 100%": { boxShadow: "0 0 8px rgba(34,211,238,0.3)" },
-          "50%":      { boxShadow: "0 0 24px rgba(34,211,238,0.6)" },
-        },
-        "slide-in": {
-          from: { transform: "translateY(12px)", opacity: "0" },
-          to:   { transform: "translateY(0)",    opacity: "1" },
-        },
-        "fade-in": {
-          from: { opacity: "0" },
-          to:   { opacity: "1" },
+        "aurora-scroll": {
+          "0%, 100%": { backgroundPosition: "0% 0%" },
+          "50%": { backgroundPosition: "0% 100%" },
         },
       },
-      backdropBlur: {
-        xs: "2px",
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
+        "aurora-scroll": "aurora-scroll 4s ease infinite",
       },
     },
   },
-  plugins: [],
-};
+  plugins: [require("tailwindcss-animate")],
+}
