@@ -1,17 +1,37 @@
 import React from "react";
-import TechStackSlide from "@/components/TechStackSlide";
+import { Card } from "@/components/ui/card";
+import AccordionGallery from "@/components/ui/AccordionGallery";
+
+const galleryItems = [
+  { image: "/layer_adversary_1789300342996.jpg", label: "Adversary Layer" },
+  { image: "/layer_ot_1789300382550.jpg", label: "OT Network" },
+  { image: "/layer_physical_1789300356802.jpg", label: "Physical Process" },
+  { image: "/layer_safecut_1789300396585.jpg", label: "SafeCut Engine" },
+  { image: "/layer_presentation_1789300410942.jpg", label: "Presentation" }
+];
 
 export default function ArchitecturePage() {
   return (
     <main className="flex-1 py-24">
       <div className="container mx-auto px-6 max-w-5xl">
-        <h1 className="text-4xl md:text-5xl font-black text-text-primary mb-12 tracking-tight">System Architecture</h1>
+        <h1 className="text-4xl md:text-5xl font-display font-semibold mb-12 tracking-tight">System Architecture</h1>
+
+        <div className="mb-24 w-full">
+          <AccordionGallery 
+            items={galleryItems} 
+            defaultIndex={0} 
+            height={500}
+            gap={12}
+            expandRatio={0.6}
+            accentColor="var(--color-amber)"
+          />
+        </div>
 
         {/* ── Pipeline ── */}
         <section className="mb-24">
-          <h2 className="text-xl font-bold text-accent-cyan mb-8 uppercase tracking-widest text-sm">Seven-Stage Pipeline</h2>
+          <h2 className="text-xl font-display font-medium mb-8 border-b border-white/10 pb-4">Seven-Stage Pipeline</h2>
           
-          <div className="space-y-4">
+          <div className="grid gap-6">
             {[
               { n: "1", title: "Network Model", desc: "The OT environment is modeled as a directed graph where nodes are devices and edges are communication links. SIF (Safety Instrumented Function) paths are explicitly tagged." },
               { n: "2", title: "Threat Detection", desc: "An intrusion detection monitor identifies unauthorized behavior, such as an anomalous Modbus register write, and flags the compromised node." },
@@ -21,60 +41,54 @@ export default function ArchitecturePage() {
               { n: "6", title: "Process Validation", desc: "The physical process (modeled via a CSTR reactor simulation) responds to the network state, remaining stable rather than experiencing thermal runaway." },
               { n: "7", title: "Dashboard", desc: "The real-time presentation layer visualizes the topology, threat state, certificate validation, and reactor telemetry for the defender." },
             ].map((step) => (
-              <div key={step.n} className="glass p-6 rounded-2xl flex gap-6 items-start">
-                <div className="w-10 h-10 shrink-0 rounded-xl bg-accent-cyan/10 border border-accent-cyan/30 flex items-center justify-center text-accent-cyan font-black">
+              <Card key={step.n} className="p-6 flex gap-6 items-start">
+                <div className="w-10 h-10 shrink-0 border border-white/10 bg-muted flex items-center justify-center font-mono font-bold">
                   {step.n}
                 </div>
                 <div>
-                  <h3 className="font-bold text-text-primary text-lg mb-2">{step.title}</h3>
-                  <p className="text-sm text-text-muted leading-relaxed">{step.desc}</p>
+                  <h3 className="font-semibold text-lg mb-2 font-display">{step.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         </section>
 
         {/* ── The Solver ── */}
         <section className="mb-24">
-          <h2 className="text-xl font-bold text-accent-cyan mb-8 uppercase tracking-widest text-sm">The Solver & Certificate</h2>
+          <h2 className="text-xl font-display font-medium mb-8 border-b border-white/10 pb-4">The Solver & Certificate</h2>
           
           <div className="grid md:grid-cols-2 gap-8">
-            <div className="glass p-8 rounded-2xl">
-              <h3 className="font-bold text-text-primary text-xl mb-4">Infinite-Capacity Safety Edges</h3>
-              <p className="text-sm text-text-secondary leading-relaxed mb-4">
+            <Card className="p-8">
+              <h3 className="font-semibold text-xl mb-4 font-display">Infinite-Capacity Safety Edges</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-4">
                 The core innovation of SafeCut lies in its solver formulation. By modeling the network as a flow network, we can determine the minimum set of edges to remove to isolate a compromised node from the rest of the network.
               </p>
-              <p className="text-sm text-text-secondary leading-relaxed">
-                To guarantee safety, every edge that is part of a Safety Instrumented Function (SIF) loop is assigned an <strong>infinite capacity</strong>. Because the min-cut algorithm structurally cannot select an edge with infinite capacity, it is mathematically impossible for the solver to sever a safety loop.
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                To guarantee safety, every edge that is part of a Safety Instrumented Function (SIF) loop is assigned an <strong className="text-foreground">infinite capacity</strong>. Because the min-cut algorithm structurally cannot select an edge with infinite capacity, it is mathematically impossible for the solver to sever a safety loop.
               </p>
-            </div>
+            </Card>
             
-            <div className="glass p-8 rounded-2xl">
-              <h3 className="font-bold text-text-primary text-xl mb-4">Independently Verifiable</h3>
-              <p className="text-sm text-text-secondary leading-relaxed mb-4">
+            <Card className="p-8">
+              <h3 className="font-semibold text-xl mb-4 font-display">Independently Verifiable</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-4">
                 We do not trust the solver&apos;s output blindly. After a cut is proposed, an independent verifier runs a breadth-first search (BFS) on the post-cut graph.
               </p>
-              <p className="text-sm text-text-secondary leading-relaxed">
-                This verifier checks reachability for every single component in every safety loop. Only if the verifier confirms that all loops are intact does it issue a cryptographic <strong>Certificate of Safety</strong>. If a compromised node is within a safety loop, the solver returns INFEASIBLE rather than offering a false guarantee.
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                This verifier checks reachability for every single component in every safety loop. Only if the verifier confirms that all loops are intact does it issue a cryptographic <strong className="text-foreground">Certificate of Safety</strong>. If a compromised node is within a safety loop, the solver returns INFEASIBLE rather than offering a false guarantee.
               </p>
-            </div>
+            </Card>
           </div>
         </section>
 
         {/* ── Limitation ── */}
-        <section className="mb-24">
-          <div className="border-l-4 border-l-accent-amber bg-accent-amber/5 p-8 rounded-r-2xl">
-            <h2 className="text-lg font-bold text-accent-amber mb-2 uppercase tracking-widest text-sm">Stated Limitation</h2>
-            <p className="text-sm text-text-secondary leading-relaxed">
+        <section>
+          <div className="border border-safety-warn bg-safety-warn/5 p-8 rounded-sm hard-shadow">
+            <h2 className="text-lg font-bold text-safety-warn mb-2 font-mono uppercase tracking-widest text-sm">Stated Limitation</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
               SafeCut preserves loop <em>connectivity</em>, not device <em>integrity</em>. If an adversary compromises a device that is physically part of a safety loop, SafeCut cannot isolate it without breaking the loop. In such cases, the solver will correctly identify the situation as INFEASIBLE and alert the operator, rather than applying a cut that compromises safety or relying on a false guarantee.
             </p>
           </div>
-        </section>
-
-        {/* ── Tech Stack ── */}
-        <section>
-          <h2 className="text-xl font-bold text-accent-cyan mb-8 uppercase tracking-widest text-sm">Technology Stack</h2>
-          <TechStackSlide />
         </section>
 
       </div>

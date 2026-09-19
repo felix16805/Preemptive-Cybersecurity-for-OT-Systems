@@ -96,18 +96,14 @@ export interface AttackEvent {
 export interface IncidentLog {
   id?: string;
   created_at?: string;
-  detected_at: string;
-  responded_at: string;
-  mitre_tactic: string;
-  source_ip: string;
-  target_ip: string;
-  mode: "safecut" | "quarantine";
-  compromised_node: string;
-  cut_edges: CutEdge[];
-  certificate: Certificate;
-  solve_time_ms: number;
+  session_id: string;
+  threat_node: string;
+  threat_ip?: string;
+  safecut_triggered: boolean;
+  certificate_issued: boolean;
+  edges_cut: number;
   safety_loops_preserved: number;
-  reactor_stable: boolean;
-  reactor_curve?: ReactorDataPoint[];
+  total_safety_loops: number;
+  log_messages: string[];
 }
 

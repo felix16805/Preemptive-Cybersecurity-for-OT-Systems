@@ -48,18 +48,15 @@ export async function POST(req: Request) {
 
     // 5. Log to Supabase (non-blocking)
     logIncident({
-      detected_at: new Date(Date.now() - 5000).toISOString(), // Simulated 5s ago
-      responded_at: new Date().toISOString(),
-      mitre_tactic: "Initial Access / Execution",
-      source_ip: "EXTERNAL",
-      target_ip: "192.168.10.102",
-      mode: "safecut",
-      compromised_node: compromisedNode,
-      cut_edges: solverOutput.cutEdges,
-      certificate,
-      solve_time_ms: solverOutput.solveTimeMs,
+      session_id: "API_SAFECUT_RUN",
+      threat_node: compromisedNode,
+      threat_ip: "192.168.10.102",
+      safecut_triggered: true,
+      certificate_issued: certificate.allPreserved,
+      edges_cut: solverOutput.cutEdges.length,
       safety_loops_preserved: result.safetyLoopsPreserved,
-      reactor_stable: reactorStable,
+      total_safety_loops: result.totalSafetyLoops,
+      log_messages: ["[SAFECUT] Edmonds-Karp min-cut applied", "[SAFECUT] Independent reachability verification complete"]
     }).catch((err) => console.error("[API/safecut] Supabase log failed:", err));
 
     // 6. Write isolation event to Neo4j (non-blocking)

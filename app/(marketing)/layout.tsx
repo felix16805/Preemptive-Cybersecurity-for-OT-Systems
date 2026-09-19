@@ -1,4 +1,3 @@
-import SharedNav from "@/components/SharedNav";
 import SharedFooter from "@/components/SharedFooter";
 
 export default function MarketingLayout({
@@ -8,7 +7,6 @@ export default function MarketingLayout({
 }) {
   return (
     <div className="flex flex-col min-h-screen">
-      <SharedNav />
       {children}
       <SharedFooter />
     </div>

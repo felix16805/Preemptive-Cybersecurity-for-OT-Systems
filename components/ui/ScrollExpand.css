@@ -1,0 +1,63 @@
+.scroll-expand-container {
+  position: relative;
+  width: 100%;
+}
+
+.scroll-expand-track {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-ink);
+}
+
+.scroll-expand-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2rem;
+  /* Elements inside should probably be positioned absolutely or with flex to not overlap center block */
+}
+
+.scroll-expand-centerBlock {
+  position: relative;
+  z-index: 2;
+  border-radius: 24px;
+  overflow: hidden;
+  will-change: width, height, border-radius;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  background: var(--color-paper);
+}
+
+.scroll-expand-mediaWrap {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.scroll-expand-media {
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+}
+
+.scroll-expand-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-expand-centerBlock {
+    border-radius: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
