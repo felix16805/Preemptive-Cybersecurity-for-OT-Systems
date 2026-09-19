@@ -166,6 +166,7 @@ const GooeyNav = ({
 
     resizeObserver.observe(containerRef.current);
     return () => resizeObserver.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeIndex, isReducedMotion]);
 
   return (

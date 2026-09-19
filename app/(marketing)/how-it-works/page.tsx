@@ -63,7 +63,7 @@ export default function HowItWorksPage() {
             <div className="text-primary mb-6">$ safecut-cli attack --target HMI --session SAFECUT-7F3A-9B21</div>
             
             <div className="text-muted-foreground mb-4"># 4. Impact (Send rogue Modbus writes to the Reactor PLC)</div>
-            <div className="text-primary mb-2">$ safecut-cli run impact --target=PLC_REACTOR --payload="OVERRIDE_TEMP" --session=&lt;ID&gt;</div>
+            <div className="text-primary mb-2">$ safecut-cli run impact --target=PLC_REACTOR --payload=&quot;OVERRIDE_TEMP&quot; --session=&lt;ID&gt;</div>
           </div>
         </section>
 

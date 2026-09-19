@@ -114,7 +114,7 @@ export default function ComputationSteps({
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           <h2 className="text-2xl font-display font-medium mb-4 text-destructive">3. The Blind Quarantine Failure</h2>
           <p className="text-muted-foreground font-sans leading-relaxed mb-6">
-            If a standard IT security playbook (like a SOAR platform) had responded to this intrusion, it would have applied a "Deny All" firewall rule to isolate the {compromisedNode}.
+            If a standard IT security playbook (like a SOAR platform) had responded to this intrusion, it would have applied a &quot;Deny All&quot; firewall rule to isolate the {compromisedNode}.
           </p>
           <p className="text-muted-foreground font-sans leading-relaxed mb-6">
             Notice how the standard approach severs the connections blindly, cutting through {quarantineEdges.length} edges and critically destroying the safety-instrumented loops, leading to process instability.

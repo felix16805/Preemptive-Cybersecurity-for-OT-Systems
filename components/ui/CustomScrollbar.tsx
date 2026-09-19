@@ -49,10 +49,11 @@ export default function CustomScrollbar() {
     updateScroll();
     window.addEventListener("scroll", updateScroll, { passive: true });
     window.addEventListener("resize", updateScroll);
+    const timeout = hideTimeoutRef.current;
     return () => {
       window.removeEventListener("scroll", updateScroll);
       window.removeEventListener("resize", updateScroll);
-      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+      if (timeout) clearTimeout(timeout);
     };
   }, [updateScroll]);
 
