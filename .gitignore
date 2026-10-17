@@ -17,6 +17,27 @@ build/
 .next/
 out/
 
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.eggs/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ML artifacts
+ml/data/raw/
+ml/data/processed/
+ml/models/*.joblib
+ml/models/*.pkl
+ml/models/*.h5
+ml/models/*.pt
+ml/reports/
+
 # OS generated files
 .DS_Store
 Thumbs.db

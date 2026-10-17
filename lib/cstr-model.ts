@@ -14,6 +14,9 @@ import type { ReactorDataPoint } from "@/types";
 //    - Runaway endpoint: ~850 K (without cooling)
 // ─────────────────────────────────────────────────────────────────────────────
 
+export const MAX_SAFE_TEMPERATURE = 400.0; // Kelvin
+export const RUNAWAY_TEMPERATURE = 450.0; // Kelvin
+
 const PARAMS = {
   F: 0.1,          // volumetric flow rate (m³/s)
   V: 1.0,          // reactor volume (m³)
@@ -96,6 +99,45 @@ export function simulateCSTR(
   }
 
   return points;
+}
+
+/**
+ * Check if the reactor process is stable based on CSTR simulation
+ * @param coolingActive Whether the cooling loop is active
+ * @param duration Simulation duration in seconds
+ * @returns Stability result with max temperature and status
+ */
+export function checkReactorStability(
+  coolingActive: boolean,
+  duration: number = 120
+): {
+  stable: boolean;
+  maxTemp: number;
+  finalTemp: number;
+  dataPoints: ReactorDataPoint[];
+  status: "STABLE" | "WARNING" | "RUNAWAY";
+} {
+  const data = simulateCSTR(duration, 2, coolingActive, 355, 0.5, coolingActive ? "safecut" : "quarantine");
+  const temps = data.map(p => p.temp);
+  const maxTemp = Math.max(...temps);
+  const finalTemp = temps[temps.length - 1];
+
+  let status: "STABLE" | "WARNING" | "RUNAWAY";
+  if (maxTemp < MAX_SAFE_TEMPERATURE) {
+    status = "STABLE";
+  } else if (maxTemp < RUNAWAY_TEMPERATURE) {
+    status = "WARNING";
+  } else {
+    status = "RUNAWAY";
+  }
+
+  return {
+    stable: status === "STABLE",
+    maxTemp: parseFloat(maxTemp.toFixed(2)),
+    finalTemp: parseFloat(finalTemp.toFixed(2)),
+    dataPoints: data,
+    status,
+  };
 }
 
 /** Pre-generate comparison datasets (called once at startup) */

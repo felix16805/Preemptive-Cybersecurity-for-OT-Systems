@@ -1,10 +1,12 @@
 import type { OTGraph, OTEdge, CutEdge, Certificate, SafetyLoop, SIFResult } from "@/types";
 import { SAFETY_LOOPS } from "@/lib/ot-topology";
+import { INF_CAPACITY } from "@/types";
 
 // ─── Edmonds-Karp (BFS-based max-flow / min-cut) ──────────────────────────────
 //
-//  Safety-loop edges are given Infinity capacity → the algorithm is
+//  Safety-loop edges are given INF_CAPACITY → the algorithm is
 //  mathematically forced to route the cut around them.
+//  Edges with protectedFromCut=true are never cut candidates.
 //
 //  Returns the set of edges in the min-cut (these are the links to sever).
 // ─────────────────────────────────────────────────────────────────────────────
@@ -22,7 +24,8 @@ function buildResidualGraph(graph: OTGraph): AdjMap {
     ensureNode(edge.source);
     ensureNode(edge.target);
 
-    const cap = edge.capacity === Infinity ? 1e15 : edge.capacity;
+    // Use INF_CAPACITY for protected edges, otherwise use edge capacity
+    const cap = edge.protectedFromCut ? INF_CAPACITY : edge.capacity;
 
     // Undirected → add both directions
     const fwd = adj.get(edge.source)!;
@@ -144,14 +147,15 @@ export function computeSafeCut(input: SolverInput): SolverOutput {
   // Build augmented graph with a virtual super-sink connected to all protected nodes
   const SUPER_SINK = "__SUPER_SINK__";
   const augmentedGraph: OTGraph = {
-    nodes: [...graph.nodes, { id: SUPER_SINK, label: "SuperSink", type: "Switch", isSafetyCritical: false }],
+    nodes: [...graph.nodes, { id: SUPER_SINK, label: "SuperSink", type: "Switch", isSafetyCritical: false, criticality: 0 }],
     edges: [
       ...graph.edges,
       ...protectedNodes.map((pn) => ({
         source: pn,
         target: SUPER_SINK,
-        capacity: Infinity, // don't cut these connector edges
+        capacity: INF_CAPACITY, // don't cut these connector edges
         isSafetyLoop: true,
+        protectedFromCut: true,
       })),
     ],
   };
@@ -163,7 +167,7 @@ export function computeSafeCut(input: SolverInput): SolverOutput {
   // Collect cut edges: edges crossing from S-side to T-side in original graph
   const cutEdges: CutEdge[] = [];
   for (const edge of graph.edges) {
-    if (edge.capacity === Infinity) continue; // safety edges — never cut
+    if (edge.protectedFromCut) continue; // safety edges — never cut
     const srcInS = sReachable.has(edge.source);
     const tgtInS = sReachable.has(edge.target);
     if (srcInS !== tgtInS) {
@@ -271,6 +275,9 @@ export function verifyCertificate(
     solverUsed: "Edmonds-Karp",
     sifResults,
     allPreserved: sifResults.every((r) => r.preserved),
+    preservedCount: sifResults.filter((r) => r.preserved).length,
+    requiredCount: sifResults.length,
+    valid: sifResults.every((r) => r.preserved),
   };
 }
 

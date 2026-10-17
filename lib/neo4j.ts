@@ -6,7 +6,7 @@ import { OT_TOPOLOGY } from "@/lib/ot-topology";
 
 let _driver: Driver | null = null;
 
-function getDriver(): Driver | null {
+export function getDriver(): Driver | null {
   if (_driver) return _driver;
 
   const uri = process.env.NEO4J_URI;
@@ -14,7 +14,6 @@ function getDriver(): Driver | null {
   const password = process.env.NEO4J_PASSWORD;
 
   if (!uri || !user || !password) {
-    console.warn("[Neo4j] No credentials configured — topology served from in-memory definition.");
     return null;
   }
 
@@ -23,7 +22,9 @@ function getDriver(): Driver | null {
     return _driver;
   } catch (err) {
     console.error("[Neo4j] Failed to create driver:", err);
-    return null;
+    throw new Error(
+      `Neo4j Driver Initialization Error: ${err instanceof Error ? err.message : String(err)}`
+    );
   }
 }
 
@@ -31,7 +32,9 @@ function getDriver(): Driver | null {
 
 export async function seedTopology(graph: OTGraph = OT_TOPOLOGY): Promise<void> {
   const driver = getDriver();
-  if (!driver) return;
+  if (!driver) {
+    throw new Error("Neo4j driver is not configured. Set NEO4J_URI, NEO4J_USER, and NEO4J_PASSWORD.");
+  }
 
   const session = driver.session();
   try {
@@ -70,6 +73,7 @@ export async function seedTopology(graph: OTGraph = OT_TOPOLOGY): Promise<void> 
     console.log("[Neo4j] Topology seeded successfully.");
   } catch (err) {
     console.error("[Neo4j] Seed error:", err);
+    throw new Error(`Neo4j seeding failed: ${err instanceof Error ? err.message : String(err)}`);
   } finally {
     await session.close();
   }
@@ -79,7 +83,9 @@ export async function seedTopology(graph: OTGraph = OT_TOPOLOGY): Promise<void> 
 
 export async function fetchTopology(): Promise<OTGraph> {
   const driver = getDriver();
-  if (!driver) return OT_TOPOLOGY; // fallback
+  if (!driver) {
+    throw new Error("Neo4j is not configured. Set NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD or disable live topology.");
+  }
 
   const session = driver.session();
   try {
@@ -112,7 +118,9 @@ export async function fetchTopology(): Promise<OTGraph> {
     return { nodes, edges };
   } catch (err) {
     console.error("[Neo4j] Fetch error:", err);
-    return OT_TOPOLOGY;
+    throw new Error(
+      `Neo4j topology query failed: ${err instanceof Error ? err.message : String(err)}`
+    );
   } finally {
     await session.close();
   }
@@ -126,7 +134,7 @@ export async function writeIsolationEvent(
   mode: string
 ): Promise<void> {
   const driver = getDriver();
-  if (!driver) return;
+  if (!driver) return; // Optional service
 
   const session = driver.session();
   try {
@@ -147,6 +155,9 @@ export async function writeIsolationEvent(
     );
   } catch (err) {
     console.error("[Neo4j] Write event error:", err);
+    throw new Error(
+      `Neo4j isolation event write failed: ${err instanceof Error ? err.message : String(err)}`
+    );
   } finally {
     await session.close();
   }
