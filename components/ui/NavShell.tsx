@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { usePathname } from "next/navigation";
 import CardNav from "@/components/ui/CardNav";
 import { StaggeredMenu } from "@/components/ui/StaggeredMenu";
@@ -23,16 +24,17 @@ const CARD_NAV_ITEMS = [
     textColor: "#F5F3EE",
     links: [
       { label: "Simulation", href: "/simulation" },
+      { label: "ML Lab", href: "/ml-lab" },
       { label: "Resources", href: "/resources" },
     ],
   },
   {
-    label: "Connect",
+    label: "Platform",
     bgColor: "#111318",
     textColor: "#F5F3EE",
     links: [
+      { label: "Defender Console", href: "/console" },
       { label: "About", href: "/about" },
-      { label: "Contact", href: "/contact" },
     ],
   },
 ];
@@ -43,14 +45,21 @@ const MOBILE_MENU_ITEMS = [
   { label: "How It Works", link: "/how-it-works" },
   { label: "Architecture", link: "/architecture" },
   { label: "Simulation", link: "/simulation" },
+  { label: "ML Lab", link: "/ml-lab" },
   { label: "Resources", link: "/resources" },
   { label: "About", link: "/about" },
-  { label: "Contact", link: "/contact" },
-  { label: "Defender Sign In", link: "/console" },
+  { label: "Defender Console", link: "/console" },
 ];
 
 export default function NavShell() {
   const { isLightMode, toggleTheme } = useTheme();
+  const pathname = usePathname();
+
+  const cardNavItems = useMemo(() => CARD_NAV_ITEMS.map(item => ({
+    ...item,
+    bgColor: isLightMode ? "#F5F3EE" : item.bgColor,
+    textColor: isLightMode ? "#111318" : item.textColor,
+  })), [isLightMode]);
 
   const ThemeToggleBtn = (
     <button 
@@ -69,12 +78,7 @@ export default function NavShell() {
       <div className="hidden md:block">
         <CardNav
           logoText="SafeCut"
-          items={CARD_NAV_ITEMS.map(item => ({
-            ...item,
-            // Invert submenu background based on theme if desired.
-            bgColor: isLightMode ? "#F5F3EE" : item.bgColor,
-            textColor: isLightMode ? "#111318" : item.textColor,
-          }))}
+          items={cardNavItems}
           baseColor={isLightMode ? "#F5F3EE" : "#111318"}
           menuColor={isLightMode ? "#111318" : "#F5F3EE"}
           buttonBgColor="#C8862B"

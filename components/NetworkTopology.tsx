@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import * as d3 from "d3";
 import type { OTGraph, OTNode, CutEdge } from "@/types";
 
@@ -26,14 +26,17 @@ const TYPE_COLOR: Record<OTNode["type"], string> = {
 
 export default function NetworkTopology({ graph, compromisedNode, cutEdges, attackPath, mode }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 760, height: 300 });
+  const [dimensions, setDimensions] = useState({ width: 760, height: 380 });
+  const positionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
 
   // Track container size
   useEffect(() => {
     const el = svgRef.current?.parentElement;
     if (!el) return;
     const obs = new ResizeObserver(() => {
-      setDimensions({ width: el.clientWidth, height: el.clientHeight });
+      if (el.clientWidth > 0 && el.clientHeight > 0) {
+        setDimensions({ width: el.clientWidth, height: el.clientHeight });
+      }
     });
     obs.observe(el);
     return () => obs.disconnect();
@@ -80,20 +83,42 @@ export default function NetworkTopology({ graph, compromisedNode, cutEdges, atta
       attackPathSet.add(`${attackPath[i + 1]}:${attackPath[i]}`);
     }
 
-    const nodes = graph.nodes.map((n) => ({ ...n })) as (OTNode & d3.SimulationNodeDatum)[];
+    const nodes = graph.nodes.map((n) => {
+      const saved = positionsRef.current.get(n.id);
+      if (saved) {
+        return { ...n, x: saved.x, y: saved.y, fx: saved.x, fy: saved.y };
+      }
+      return { ...n };
+    }) as (OTNode & d3.SimulationNodeDatum)[];
+
     const links = graph.edges.map((e) => ({
       source: e.source,
       target: e.target,
       isSafetyLoop: e.isSafetyLoop,
     }));
 
-    // ── Force simulation ─────────────────────────────────────────────────
-    const sim = d3
-      .forceSimulation(nodes)
-      .force("link", d3.forceLink(links).id((d: any) => d.id).distance(90).strength(0.6))
-      .force("charge", d3.forceManyBody().strength(-280))
-      .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide(38));
+    // If positions aren't settled yet, compute stable layout synchronously
+    const hasAllPositions = nodes.every((n) => positionsRef.current.has(n.id));
+    if (!hasAllPositions) {
+      const sim = d3
+        .forceSimulation(nodes)
+        .force("link", d3.forceLink(links).id((d: any) => d.id).distance(95).strength(0.65))
+        .force("charge", d3.forceManyBody().strength(-320))
+        .force("center", d3.forceCenter(width / 2, height / 2))
+        .force("collision", d3.forceCollide(42))
+        .stop();
+
+      // Run 250 ticks immediately so it settles statically without visual twitching
+      for (let i = 0; i < 250; ++i) sim.tick();
+
+      nodes.forEach((n) => {
+        if (typeof n.x === "number" && typeof n.y === "number") {
+          positionsRef.current.set(n.id, { x: n.x, y: n.y });
+          n.fx = n.x;
+          n.fy = n.y;
+        }
+      });
+    }
 
     const container = svg.append("g");
 
@@ -145,7 +170,7 @@ export default function NetworkTopology({ graph, compromisedNode, cutEdges, atta
       .attr("font-weight", "bold")
       .attr("text-anchor", "middle")
       .attr("dominant-baseline", "central")
-      .attr("opacity", 0)
+      .attr("opacity", 1)
       .attr("class", "animate-fade-in");
 
     // ── Nodes ────────────────────────────────────────────────────────────
@@ -154,7 +179,7 @@ export default function NetworkTopology({ graph, compromisedNode, cutEdges, atta
       .selectAll("g")
       .data(nodes)
       .join("g")
-      .attr("cursor", "pointer");
+      .attr("cursor", "grab");
 
     // Isolation boundary
     nodeG
@@ -224,9 +249,47 @@ export default function NetworkTopology({ graph, compromisedNode, cutEdges, atta
       .attr("text-anchor", "middle")
       .attr("y", 29)
       .attr("font-size", "9")
-      .attr("font-family", "JetBrains Mono, monospace")
+      .attr("font-family", "ui-monospace, monospace")
       .attr("fill", (d) => (d.id === compromisedNode ? "#f87171" : "#94a3b8"))
       .attr("font-weight", (d) => (d.id === compromisedNode ? "700" : "400"));
+
+    // Function to render static/dragged positions
+    function updatePositions() {
+      link
+        .attr("x1", (d: any) => {
+          const s = typeof d.source === "object" ? d.source : positionsRef.current.get(d.source);
+          return s?.x ?? 0;
+        })
+        .attr("y1", (d: any) => {
+          const s = typeof d.source === "object" ? d.source : positionsRef.current.get(d.source);
+          return s?.y ?? 0;
+        })
+        .attr("x2", (d: any) => {
+          const t = typeof d.target === "object" ? d.target : positionsRef.current.get(d.target);
+          return t?.x ?? 0;
+        })
+        .attr("y2", (d: any) => {
+          const t = typeof d.target === "object" ? d.target : positionsRef.current.get(d.target);
+          return t?.y ?? 0;
+        });
+
+      cutX
+        .attr("x", (d: any) => {
+          const s = typeof d.source === "object" ? d.source : positionsRef.current.get(d.source);
+          const t = typeof d.target === "object" ? d.target : positionsRef.current.get(d.target);
+          return ((s?.x ?? 0) + (t?.x ?? 0)) / 2;
+        })
+        .attr("y", (d: any) => {
+          const s = typeof d.source === "object" ? d.source : positionsRef.current.get(d.source);
+          const t = typeof d.target === "object" ? d.target : positionsRef.current.get(d.target);
+          return ((s?.y ?? 0) + (t?.y ?? 0)) / 2;
+        });
+
+      nodeG.attr("transform", (d: any) => `translate(${d.x ?? 0},${d.y ?? 0})`);
+    }
+
+    // Call update positions immediately
+    updatePositions();
 
     // ── Drag + zoom ──────────────────────────────────────────────────────
     const zoom = d3.zoom<SVGSVGElement, unknown>()
@@ -235,54 +298,34 @@ export default function NetworkTopology({ graph, compromisedNode, cutEdges, atta
     svg.call(zoom as any);
 
     const drag = d3.drag<SVGGElement, OTNode & d3.SimulationNodeDatum>()
-      .on("start", (e, d) => { if (!e.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
-      .on("drag",  (e, d) => { d.fx = e.x; d.fy = e.y; })
-      .on("end",   (e, d) => { if (!e.active) sim.alphaTarget(0); d.fx = null; d.fy = null; });
+      .on("start", (_e, d) => {
+        d3.select(svgRef.current).style("cursor", "grabbing");
+      })
+      .on("drag", (e, d) => {
+        d.x = e.x;
+        d.y = e.y;
+        d.fx = e.x;
+        d.fy = e.y;
+        positionsRef.current.set(d.id, { x: e.x, y: e.y });
+        updatePositions();
+      })
+      .on("end", (_e, d) => {
+        d3.select(svgRef.current).style("cursor", "grab");
+        positionsRef.current.set(d.id, { x: d.x ?? 0, y: d.y ?? 0 });
+      });
+
     nodeG.call(drag as any);
 
-    // ── Tick ─────────────────────────────────────────────────────────────
-    sim.on("tick", () => {
-      link
-        .attr("x1", (d: any) => d.source.x)
-        .attr("y1", (d: any) => d.source.y)
-        .attr("x2", (d: any) => d.target.x)
-        .attr("y2", (d: any) => d.target.y);
-      
-      cutX
-        .attr("x", (d: any) => (d.source.x + d.target.x) / 2)
-        .attr("y", (d: any) => (d.source.y + d.target.y) / 2);
-
-      nodeG.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
-    });
-
-    return () => { sim.stop(); };
   }, [graph, compromisedNode, cutEdges, attackPath, dimensions, mode]);
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full select-none">
       <svg
         ref={svgRef}
         width={dimensions.width}
         height={dimensions.height}
         className="w-full h-full"
       />
-      {/* Legend */}
-      <div className="absolute bottom-2 left-2 flex flex-col gap-1 text-xs font-mono">
-        {[
-          { color: "#22d3ee", dash: true,  label: "Safety Loop Edge"   },
-          { color: "#ef4444", dash: false, label: "Compromised / Cut"  },
-          { color: "#f59e0b", dash: false, label: "Lateral Movement"   },
-          { color: "#334155", dash: false, label: "Normal Link"        },
-        ].map((l) => (
-          <div key={l.label} className="flex items-center gap-2 opacity-70">
-            <svg width="24" height="6">
-              <line x1="0" y1="3" x2="24" y2="3" stroke={l.color} strokeWidth="1.5"
-                strokeDasharray={l.dash ? "4 2" : "none"} />
-            </svg>
-            <span className="text-text-muted">{l.label}</span>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }

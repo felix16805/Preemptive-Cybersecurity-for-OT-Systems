@@ -86,3 +86,24 @@ export const SAFETY_LOOPS: SafetyLoop[] = [
     edges: [{ source: "SCADA", target: "SAFETY_CTRL" }],
   },
 ];
+
+// ─── Network zones (ISA/IEC 62443 zone model) ────────────────────────────────
+//  The conventional "blind quarantine" response isolates the WHOLE zone that
+//  contains the compromised device. As in the TRITON incident, the safety
+//  controller shares the control network zone with the PLCs and field devices,
+//  so quarantining that zone also cuts the safety loops.
+export interface NetworkZone { id: string; name: string; nodes: string[] }
+
+export const ZONES: NetworkZone[] = [
+  { id: "SUPERVISORY", name: "Supervisory zone (Level 2-3)", nodes: ["HISTORIAN", "SCADA", "HMI"] },
+  {
+    id: "CONTROL",
+    name: "Control network zone (Level 0-1, incl. safety system)",
+    nodes: ["PLC_01", "PLC_02", "PLC_03", "PLC_04", "TEMP_SENSOR", "COOL_VALVE",
+            "PRESSURE_SENSOR", "PRESSURE_VALVE", "SAFETY_CTRL"],
+  },
+];
+
+export function zoneOf(nodeId: string): NetworkZone | undefined {
+  return ZONES.find((z) => z.nodes.includes(nodeId));
+}

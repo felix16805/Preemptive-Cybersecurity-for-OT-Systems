@@ -1,22 +1,9 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import NavShell from "@/components/ui/NavShell";
 import AuroraShell from "@/components/ui/AuroraShell";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import CustomScrollbar from "@/components/ui/CustomScrollbar";
-
-const ibmPlexSans = IBM_Plex_Sans({
-  weight: ["400", "500", "600", "700"],
-  subsets: ["latin"],
-  variable: "--font-plex-sans",
-});
-
-const ibmPlexMono = IBM_Plex_Mono({
-  weight: ["400", "500", "700"],
-  subsets: ["latin"],
-  variable: "--font-plex-mono",
-});
 
 export const metadata: Metadata = {
   title: "SafeCut — Preemptive Cybersecurity for OT Systems",
@@ -41,14 +28,25 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
+        {/* Fonts are loaded at runtime (never at build time) so the app builds
+            and runs even with no internet. If the venue WiFi is down, the
+            system-font fallbacks below keep the UI fully legible. */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
         <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet" />
         <style>{`
           :root {
-            --font-general-sans: 'General Sans', system-ui, sans-serif;
+            --font-plex-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            --font-plex-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+            --font-general-sans: 'General Sans', var(--font-plex-sans);
           }
         `}</style>
       </head>
-      <body className={`${ibmPlexSans.variable} ${ibmPlexMono.variable} bg-background text-foreground antialiased min-h-screen font-sans`}>
+      <body className="bg-background text-foreground antialiased min-h-screen font-sans">
         <ThemeProvider>
           {/* Custom Animated Scrollbar */}
           <CustomScrollbar />

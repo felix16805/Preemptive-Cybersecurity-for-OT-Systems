@@ -1,5 +1,5 @@
 import type { OTGraph, OTEdge, CutEdge, Certificate, SafetyLoop, SIFResult } from "@/types";
-import { SAFETY_LOOPS } from "@/lib/ot-topology";
+import { SAFETY_LOOPS, zoneOf } from "@/lib/ot-topology";
 
 // ─── Edmonds-Karp (BFS-based max-flow / min-cut) ──────────────────────────────
 //
@@ -275,13 +275,27 @@ export function verifyCertificate(
 }
 
 // ─── Blind quarantine (conventional tool — for contrast demo) ─────────────────
+//
+//  Models the standard IT incident-response playbook: isolate the entire zone
+//  that contains the compromised device (shut the zone switch / drop every
+//  conduit). Every link touching any device in that zone is severed, including
+//  the safety-loop links, because the playbook has no notion of safety loops.
 
 export function computeBlindQuarantine(
   graph: OTGraph,
   compromisedNode: string
 ): CutEdge[] {
-  // Cuts ALL edges connected to the compromised node — indiscriminate
+  const zone = zoneOf(compromisedNode);
+  const members = new Set(zone ? zone.nodes : [compromisedNode]);
   return graph.edges
-    .filter((e) => e.source === compromisedNode || e.target === compromisedNode)
+    .filter((e) => members.has(e.source) || members.has(e.target))
     .map((e) => ({ source: e.source, target: e.target }));
+}
+
+// ─── Reactor outcome ───────────────────────────────────────────────────────────
+//  The CSTR stays at its setpoint only while the safety system can still drive
+//  emergency cooling, i.e. while the COOLING_LOOP survives the cut.
+
+export function coolingPreserved(certificate: Certificate): boolean {
+  return certificate.sifResults.find((r) => r.loopId === "COOLING_LOOP")?.preserved ?? false;
 }

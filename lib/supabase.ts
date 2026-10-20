@@ -6,13 +6,18 @@ import type { IncidentLog } from "@/types";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
-const _supabase =
-  supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+// Check if credentials are real (not template placeholders)
+const isConfigured = Boolean(
+  supabaseUrl &&
+  supabaseKey &&
+  !supabaseUrl.includes("your-project") &&
+  !supabaseKey.includes("your-anon-key") &&
+  supabaseUrl.startsWith("http")
+);
+
+const _supabase = isConfigured ? createClient(supabaseUrl, supabaseKey) : null;
 
 function getClient() {
-  if (!_supabase) {
-    console.warn("[Supabase] No credentials configured — incident logging disabled.");
-  }
   return _supabase;
 }
 
@@ -30,12 +35,10 @@ export async function logIncident(log: IncidentLog): Promise<string | null> {
       .single();
 
     if (error) {
-      console.error("[Supabase] Insert error:", error.message);
       return null;
     }
     return data?.id ?? null;
-  } catch (err) {
-    console.error("[Supabase] Unexpected error:", err);
+  } catch {
     return null;
   }
 }
@@ -54,12 +57,10 @@ export async function fetchIncidents(limit = 20): Promise<IncidentLog[]> {
       .limit(limit);
 
     if (error) {
-      console.error("[Supabase] Fetch error:", error.message);
       return [];
     }
     return (data ?? []) as IncidentLog[];
-  } catch (err) {
-    console.error("[Supabase] Unexpected error:", err);
+  } catch {
     return [];
   }
 }

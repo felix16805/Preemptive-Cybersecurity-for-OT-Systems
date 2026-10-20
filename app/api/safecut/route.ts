@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { OT_TOPOLOGY, SAFETY_LOOPS } from "@/lib/ot-topology";
-import { computeSafeCut, verifyCertificate } from "@/lib/safecut-engine";
+import { computeSafeCut, verifyCertificate, coolingPreserved } from "@/lib/safecut-engine";
 import { simulateCSTR } from "@/lib/cstr-model";
 import { sendAttackAlert } from "@/lib/mailer";
 import { logIncident } from "@/lib/supabase";
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     );
 
     // 3. Determine reactor stability
-    const reactorStable = certificate.allPreserved;
+    const reactorStable = coolingPreserved(certificate);
 
     const result: SafeCutResult = {
       mode: "safecut",

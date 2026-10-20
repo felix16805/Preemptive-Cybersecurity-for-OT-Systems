@@ -20,7 +20,6 @@ interface ModelProps {
 function Model({ url, modelXOffset, autoRotate, autoRotateSpeed, enableMouseParallax, enableHoverRotation, defaultRotationX, defaultRotationY, defaultRotationZ }: ModelProps) {
   const { scene } = useGLTF(url);
   const groupRef = useRef<THREE.Group>(null);
-  const [hovered, setHovered] = useState(false);
 
   useEffect(() => {
     if (groupRef.current) {
@@ -42,10 +41,6 @@ function Model({ url, modelXOffset, autoRotate, autoRotateSpeed, enableMousePara
       groupRef.current.rotation.y += autoRotateSpeed * delta * 50;
     }
 
-    // Hover rotation (additional local rotation if needed)
-    if (enableHoverRotation && hovered) {
-      groupRef.current.rotation.y += 0.5 * delta;
-    }
 
     // Mouse parallax
     if (enableMouseParallax) {
@@ -60,8 +55,6 @@ function Model({ url, modelXOffset, autoRotate, autoRotateSpeed, enableMousePara
     <group
       ref={groupRef}
       position={[modelXOffset, 0, 0]}
-      onPointerOver={() => setHovered(true)}
-      onPointerOut={() => setHovered(false)}
     >
       {/* Scale normalized so it fits perfectly in the camera view */}
       <Center scale={0.05}>
@@ -141,19 +134,17 @@ export default function ModelViewer({
         {/* Environment map to give the PBR materials rich realistic reflections */}
         {environmentPreset && <Environment preset={environmentPreset as any} />}
 
-        <Bounds fit={autoFrame} clip observe margin={1.2}>
-          <Model
-            url={url}
-            modelXOffset={modelXOffset}
-            autoRotate={autoRotate}
-            autoRotateSpeed={autoRotateSpeed}
-            enableMouseParallax={enableMouseParallax}
-            enableHoverRotation={enableHoverRotation}
-            defaultRotationX={defaultRotationX}
-            defaultRotationY={defaultRotationY}
-            defaultRotationZ={defaultRotationZ}
-          />
-        </Bounds>
+        <Model
+          url={url}
+          modelXOffset={modelXOffset}
+          autoRotate={autoRotate}
+          autoRotateSpeed={autoRotateSpeed}
+          enableMouseParallax={enableMouseParallax}
+          enableHoverRotation={enableHoverRotation}
+          defaultRotationX={defaultRotationX}
+          defaultRotationY={defaultRotationY}
+          defaultRotationZ={defaultRotationZ}
+        />
 
         <ContactShadows
           position={[0, -2, 0]}
