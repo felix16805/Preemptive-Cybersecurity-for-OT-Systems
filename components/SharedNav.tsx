@@ -42,11 +42,8 @@ export default function SharedNav() {
       </div>
 
       <div className="hidden md:flex items-center gap-4">
-        <Link href="/console" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mr-4 hidden sm:block">
-          Defender Sign In
-        </Link>
         <Button asChild>
-          <Link href="/contact">Request Session</Link>
+          <Link href="/console">Defender Console</Link>
         </Button>
       </div>
     </nav>

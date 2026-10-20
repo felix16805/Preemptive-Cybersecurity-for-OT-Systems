@@ -3,6 +3,7 @@
 import { useLayoutEffect, useRef, useState, useEffect } from 'react';
 import { gsap } from 'gsap';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import './CardNav.css';
 
 interface NavLink {
@@ -46,8 +47,7 @@ const CardNav = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const navRef = useRef<HTMLElement>(null);
-  const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
-  const tlRef = useRef<gsap.core.Timeline | null>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -84,63 +84,109 @@ const CardNav = ({
     return 260;
   };
 
-  const createTimeline = (reduced: boolean) => {
+  useLayoutEffect(() => {
+    if (navRef.current) {
+      gsap.set(navRef.current, { height: 58, overflow: 'hidden' });
+    }
+  }, []);
+
+  const openMenu = () => {
     const navEl = navRef.current;
-    if (!navEl) return null;
-    const validCards = cardsRef.current.filter(Boolean);
-    gsap.set(navEl, { height: 58, overflow: 'hidden' });
-    gsap.set(validCards, { y: reduced ? 0 : 50, opacity: 0 });
-    const dur = reduced ? 0.01 : 0.4;
-    const tl = gsap.timeline({ paused: true });
-    tl.to(navEl, { height: calculateHeight, duration: dur, ease: reduced ? 'none' : ease });
-    tl.to(validCards, { y: 0, opacity: 1, duration: dur, ease: reduced ? 'none' : ease, stagger: reduced ? 0 : 0.08 }, '-=0.1');
-    return tl;
+    if (!navEl) return;
+    setIsHamburgerOpen(true);
+    setIsExpanded(true);
+    const validCards = Array.from(navEl.querySelectorAll<HTMLElement>('.nav-card'));
+    const targetHeight = calculateHeight();
+
+    gsap.killTweensOf(navEl);
+    gsap.killTweensOf(validCards);
+
+    gsap.to(navEl, {
+      height: targetHeight,
+      duration: prefersReducedMotion ? 0.01 : 0.35,
+      ease: ease,
+    });
+
+    if (validCards.length > 0) {
+      gsap.fromTo(
+        validCards,
+        { y: prefersReducedMotion ? 0 : 35, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: prefersReducedMotion ? 0.01 : 0.3,
+          stagger: prefersReducedMotion ? 0 : 0.06,
+          ease: ease,
+          delay: prefersReducedMotion ? 0 : 0.08,
+        }
+      );
+    }
   };
 
-  useLayoutEffect(() => {
-    const tl = createTimeline(prefersReducedMotion);
-    tlRef.current = tl;
-    return () => { tl?.kill(); tlRef.current = null; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ease, items, prefersReducedMotion]);
+  const closeMenu = () => {
+    const navEl = navRef.current;
+    if (!navEl) return;
+    setIsHamburgerOpen(false);
+    setIsExpanded(false);
+    const validCards = Array.from(navEl.querySelectorAll<HTMLElement>('.nav-card'));
 
-  useLayoutEffect(() => {
+    gsap.killTweensOf(navEl);
+    gsap.killTweensOf(validCards);
+
+    if (validCards.length > 0 && !prefersReducedMotion) {
+      gsap.to(validCards, {
+        y: 20,
+        opacity: 0,
+        duration: 0.18,
+        ease: 'power2.in',
+      });
+    }
+
+    gsap.to(navEl, {
+      height: 58,
+      duration: prefersReducedMotion ? 0.01 : 0.3,
+      ease: ease,
+    });
+  };
+
+  const toggleMenu = () => {
+    if (isExpanded) {
+      closeMenu();
+    } else {
+      openMenu();
+    }
+  };
+
+  // Auto-close whenever pathname changes
+  useEffect(() => {
+    closeMenu();
+  }, [pathname]);
+
+  // Dynamic recalculation on window resize
+  useEffect(() => {
     const handleResize = () => {
-      if (!tlRef.current) return;
-      if (isExpanded) {
-        const newH = calculateHeight();
-        gsap.set(navRef.current, { height: newH });
-        tlRef.current.kill();
-        const newTl = createTimeline(prefersReducedMotion);
-        if (newTl) { newTl.progress(1); tlRef.current = newTl; }
-      } else {
-        tlRef.current.kill();
-        const newTl = createTimeline(prefersReducedMotion);
-        if (newTl) tlRef.current = newTl;
+      if (isExpanded && navRef.current) {
+        gsap.to(navRef.current, {
+          height: calculateHeight(),
+          duration: 0.2,
+          ease: 'power2.out',
+        });
       }
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isExpanded, prefersReducedMotion]);
+  }, [isExpanded]);
 
-  const toggleMenu = () => {
-    const tl = tlRef.current;
-    if (!tl) return;
-    if (!isExpanded) {
-      setIsHamburgerOpen(true);
-      setIsExpanded(true);
-      tl.play(0);
-    } else {
-      setIsHamburgerOpen(false);
-      tl.eventCallback('onReverseComplete', () => setIsExpanded(false));
-      tl.reverse();
-    }
-  };
-
-  const setCardRef = (i: number) => (el: HTMLDivElement | null) => {
-    cardsRef.current[i] = el;
-  };
+  // Click outside to collapse
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (isExpanded && navRef.current && !navRef.current.contains(e.target as Node)) {
+        closeMenu();
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isExpanded]);
 
   return (
     <div className={`card-nav-container ${className}`}>
@@ -167,9 +213,9 @@ const CardNav = ({
             <div className="hamburger-line" />
           </div>
 
-          {/* Defender Sign In (Left of center) */}
-          <Link href="/console" className="card-nav-signin" style={{ color: menuColor }}>
-            Defender Sign In
+          {/* Simulation (Left of center) */}
+          <Link href="/simulation" className="card-nav-signin" style={{ color: menuColor }}>
+            Simulation Lab
           </Link>
 
           {/* Logo wordmark (Center) */}
@@ -178,25 +224,19 @@ const CardNav = ({
               href="/" 
               className="card-nav-logo" 
               style={{ color: menuColor }}
-              onClick={() => {
-                if (isExpanded) {
-                  setIsHamburgerOpen(false);
-                  tlRef.current?.eventCallback('onReverseComplete', () => setIsExpanded(false));
-                  tlRef.current?.reverse();
-                }
-              }}
+              onClick={closeMenu}
             >
               {logoText}
             </Link>
           </div>
 
-          {/* Request Session (Right of center) */}
+          {/* Console Button (Right of center) */}
           <Link
-            href="/contact"
+            href="/console"
             className="card-nav-signin"
             style={{ color: menuColor }}
           >
-            Request Session
+            Defender Console
           </Link>
 
           {/* Theme Toggle (Right edge) */}
@@ -210,7 +250,6 @@ const CardNav = ({
             <div
               key={`${item.label}-${idx}`}
               className="nav-card"
-              ref={setCardRef(idx)}
               style={{ backgroundColor: item.bgColor, color: item.textColor }}
             >
               <div className="nav-card-label">{item.label}</div>
@@ -221,7 +260,7 @@ const CardNav = ({
                     className="nav-card-link"
                     href={lnk.href}
                     aria-label={lnk.ariaLabel}
-                    onClick={() => { setIsHamburgerOpen(false); tlRef.current?.eventCallback('onReverseComplete', () => setIsExpanded(false)); tlRef.current?.reverse(); }}
+                    onClick={closeMenu}
                   >
                     <svg className="nav-card-link-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
                       <path d="M3 13L13 3M13 3H6M13 3V10" strokeLinecap="round" strokeLinejoin="round" />

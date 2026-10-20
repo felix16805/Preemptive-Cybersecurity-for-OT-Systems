@@ -105,7 +105,7 @@ export default function ReactorChart({ safecutData, quarantineData, mode, visibl
                 strokeWidth={2}
                 dot={false}
                 activeDot={{ r: 4, fill: "#4ade80" }}
-                isAnimationActive
+                isAnimationActive={false}
                 animationDuration={1200}
               />
             )}
@@ -119,7 +119,7 @@ export default function ReactorChart({ safecutData, quarantineData, mode, visibl
                 strokeDasharray="6 4"
                 dot={false}
                 activeDot={{ r: 4, fill: "#ef4444" }}
-                isAnimationActive
+                isAnimationActive={false}
                 animationDuration={1200}
               />
             )}

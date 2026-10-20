@@ -1,0 +1,94 @@
+
+==============================================================================
+V1 — STRUCTURAL INTEGRITY  (every scenario well-formed)
+==============================================================================
+  [PASS] all scenario graphs are connected  —  0 disconnected
+  [PASS] all safety loops have 3 distinct, present endpoints  —  0 malformed
+  [PASS] attacker is never a safety-loop endpoint  —  0 violations
+  [PASS] all edge latencies are strictly positive  —  0 bad
+  [PASS] schema version consistent
+  [PASS] scenario ids unique
+
+==============================================================================
+V2 — REPRODUCIBILITY  (seed regenerates the corpus bit-for-bit)
+==============================================================================
+  [PASS] 200 sampled scenarios regenerate identically from their seed  —  0 mismatches
+  [PASS] stored corpus hash matches recomputed hash  —  f06003bd4bbcda99…
+
+==============================================================================
+V3 — ENGINEERING REALISM  (values lie in published ICS ranges)
+==============================================================================
+      per-link latency: mean 35.4 µs, p50 18.6, p99 172.8, range [2.4, 251.4]
+  [PASS] per-link latency within industrial-Ethernet envelope (1 µs–1 ms)
+      fiber_1g       mean    13.0 µs  (n=468974)
+      copper_1g      mean    20.3 µs  (n=376942)
+      copper_100m    mean    63.0 µs  (n=249507)
+      fieldbus       mean   145.0 µs  (n=84221)
+  [PASS] link-class latency ordering is physically monotonic (fiber<cu1g<cu100m<fieldbus)
+      PST budgets: mean 758 ms, range [80, 3000]
+  [PASS] PST budgets within IEC 61511 practice (80 ms–3 s)
+  [PASS] each  PST budget lies inside its declared function-class band
+  [PASS] nominal loop latency is below its PST budget for every loop (plant is safe pre-attack)  —  max nominal/PST ratio 0.015
+
+==============================================================================
+V4 — COVERAGE & BALANCE  (corpus spans the design space)
+==============================================================================
+      family: redundant_ring=1205, meshed_cell=1205, hierarchical_tree=1204, star_cell=1196, purdue_layered=1190
+      stratum: S=1205, M=1205, L=1205, XL=1204, XS=1181
+      attacker_depth: control_layer=4338, infrastructure=1170, it_foothold=467, other=25
+  [PASS] all 5 topology families present
+  [PASS] all 5 size strata present
+  [PASS] node counts span the intended range  —  [12, 400]
+  [PASS] no size stratum is under-represented (<10% of corpus)
+  [PASS] corpus contains both feasible and infeasible instances for the rigid method  —  7.8% infeasible
+
+==============================================================================
+V5 — NON-DEGENERACY  (no duplicate or trivial instances)
+==============================================================================
+  [PASS] no duplicate scenarios  —  0 duplicates
+  [PASS] every scenario has >=2 safety loops  —  min 2
+  [PASS] every scenario has >=1 lateral target
+      mean node degree (400 sampled): 2.85
+  [PASS] graphs are sparse and realistic (mean degree 1.5–6)
+
+==============================================================================
+V6 — INDEPENDENT RE-VERIFICATION OF EVERY SAFETY VERDICT
+==============================================================================
+      recomputing each reported cut from the on-disk graph, from scratch…
+      {'m3_ok': 5533, 'm4_ok': 5755, 'm3_infeasible': 467, 'm4_infeasible': 245}
+  [PASS] no accepted M3 cut ever misses a deadline
+  [PASS] no accepted M4 cut ever misses a deadline
+  [PASS] no accepted cut ever fails to contain the adversary
+  [PASS] independent recomputation reproduces the stored feasibility counts  —  m3 5533==5533, m4 5755==5755
+
+==============================================================================
+V7 — GROUND-TRUTH SOUNDNESS  (exhaustive oracle on small instances)
+==============================================================================
+      instances with a brute-force optimum: 427
+  [PASS] M4 never returns a cut smaller than the true optimum (soundness)
+  [PASS] M4 attains the true optimum in >95% of oracle-verified instances  —  99.8%
+      oracle-infeasible (within k<=3): 59; M4 returned a cut in 6
+  [PASS] no M4 cut contradicts the oracle's exhaustive enumeration up to k<=3  —  all 6 such cuts have size >3 (sizes [4, 6])
+  [PASS] M4 declares infeasible whenever no cut of any size exists  —  53 of 59 agreed outright
+
+==============================================================================
+V8 — STATISTICAL CLAIMS  (each headline number, with its test)
+==============================================================================
+      McNemar feasibility: M4-only=222, M3-only=0, chi2=220.0, p=0
+  [PASS] M4 strictly dominates M3 on feasibility (no regressions)
+  [PASS] feasibility gain is significant at p<0.001
+      Wilcoxon cut size: p=0.0467; M4 smaller 76, larger 1
+  [PASS] M4 cut size is not worse than M3 in aggregate
+      blind quarantine deadline compliance: 37.1%
+      static segmentation deadline compliance: 10.2%
+  [PASS] blind quarantine fails the safety requirement on a majority of scenarios
+      95% CI for blind-quarantine compliance: [35.9%, 38.4%]
+
+==============================================================================
+SUMMARY
+==============================================================================
+  checks passed : 34
+  checks failed : 0
+
+  corpus        : 6000 scenarios, sha256 f06003bd4bbcda997c12f12d…
+  verdict       : ALL CHECKS PASSED

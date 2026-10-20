@@ -29,3 +29,18 @@ Thumbs.db
 
 # Vercel
 .vercel
+# Local real-world benchmark datasets and generated model artifacts
+python-engine/datasets/swat/*
+python-engine/datasets/ton_iot/*
+!python-engine/datasets/swat/.gitkeep
+!python-engine/datasets/ton_iot/.gitkeep
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# TypeScript
+*.tsbuildinfo
+
+python-engine/artifacts/
+python-engine/reports/

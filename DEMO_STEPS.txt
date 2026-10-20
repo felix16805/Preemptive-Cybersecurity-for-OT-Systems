@@ -1,0 +1,123 @@
+==============================================================================
+  SafeCut - Live Two-Laptop Demo over MOBILE DATA (no ngrok)
+==============================================================================
+
+  DEFENDER laptop = runs the web console (the big screen for the audience)
+  ATTACKER laptop = runs the attacker terminal
+
+  Both laptops must be on the SAME hotspot. Internet is only needed for the
+  first-time install. The demo itself runs fully offline on the hotspot.
+
+
+------------------------------------------------------------------------------
+  BEFORE THE DAY (do this at home, with internet)
+------------------------------------------------------------------------------
+  On BOTH laptops: install Node.js LTS from https://nodejs.org
+
+  DEFENDER: double-click  START_DEFENDER.bat
+            (installs, builds and starts. Takes a few minutes the first time.)
+            Then double-click  ALLOW_FIREWALL.bat  once and click "Yes".
+
+  ATTACKER: double-click  START_ATTACKER.bat  once so it installs its packages.
+
+  Do one full rehearsal on the actual phone hotspot you will use.
+
+
+------------------------------------------------------------------------------
+  ON THE DAY: network setup  (pick ONE option)
+------------------------------------------------------------------------------
+  OPTION A - Phone hotspot  (simplest)
+    1. Turn on the phone's hotspot (mobile data on).
+    2. Connect BOTH laptops to it. Check the Wi-Fi name matches on both.
+
+  OPTION B - Defender laptop is the hotspot  (most reliable)
+    Use this if Option A connects to the internet but the laptops cannot
+    reach each other. Some phones block hotspot devices from talking to each
+    other ("client isolation"). This option avoids that completely.
+    1. Plug the phone into the DEFENDER laptop with USB, turn on USB tethering
+       on the phone.
+    2. On the DEFENDER laptop: Settings > Network & internet > Mobile hotspot.
+       Share from the USB/Ethernet connection, turn it ON.
+    3. Connect the ATTACKER laptop to that hotspot (name/password shown there).
+    4. The defender's address will be  192.168.137.1
+
+
+------------------------------------------------------------------------------
+  ON THE DAY: run it
+------------------------------------------------------------------------------
+  1. DEFENDER: double-click START_DEFENDER.bat. The console opens in the
+     browser at http://localhost:3000/console. Press F11 for full screen.
+
+  2. Look at the "Attacker Connection" box on the left of the console.
+     It shows the IP the attacker must use, for example 192.168.43.12.
+
+  3. ATTACKER: double-click START_ATTACKER.bat. When it asks
+        Defender IP:
+     type that IP and press Enter. You should see:
+        ✓ Defender reachable
+        ✓ Paired with defender session SAFECUT-DEMO
+     The IP is saved, so next time it connects by itself.
+
+  4. ATTACKER types:   demo      (full kill chain)   or   exploit
+     DEFENDER screen, Network Graph tab: PLC_02 turns red, 4 links are cut,
+     all 4 safety loops stay intact, reactor STABLE.
+
+  5. For the contrast, on the defender click "Blind Quarantine": loops
+     severed, REACTOR AT RISK. Then the "Real-time Telemetry" tab shows
+     SafeCut flat at ~355 K versus quarantine running away to ~880 K.
+
+  6. "Reset simulation state" clears everything for the next run.
+
+  Other attacker commands:  target HMI, then exploit  |  status  |  doctor  |  help
+
+
+------------------------------------------------------------------------------
+  IF THE ATTACKER CANNOT CONNECT  (the CLI tells you which case it is)
+------------------------------------------------------------------------------
+  DEFENDER: "is not a valid Win32 application" or "Turbopack is not supported"
+     - The installed packages on that laptop are damaged. START_DEFENDER.bat
+       now detects this and reinstalls automatically (needs internet).
+       You can also run REPAIR_PACKAGES.bat, then START_DEFENDER.bat.
+
+  "Defender not reachable (no reply)"
+     - Wrong IP. Use the one in the console's "Attacker Connection" box,
+       not a vEthernet / WSL / VirtualBox address from ipconfig.
+     - Laptops on different networks. Check the Wi-Fi name on both.
+     - Firewall. Run ALLOW_FIREWALL.bat on the defender.
+     - Phone client isolation. Switch to OPTION B above.
+
+  "Nothing is running on <ip>:3000"
+     - The defender server is not started. Run START_DEFENDER.bat.
+
+  "Defender reached, but it rejected session SAFECUT-DEMO"
+     - The defender is running an old build or was started with
+       SAFECUT_DEMO_MODE=0. Close it and run START_DEFENDER.bat again.
+
+  Quick test from the ATTACKER laptop's browser:
+     http://<DEFENDER-IP>:3000/api/health
+  If that page shows {"ok":true,...} the network is fine.
+
+
+------------------------------------------------------------------------------
+  OPTIONAL: real Modbus/TCP attack (genuine industrial protocol)
+------------------------------------------------------------------------------
+  DEFENDER (second terminal, server already running):
+        cd python-engine
+        pip install -r requirements.txt
+        python bridge.py --console http://localhost:3000
+  ATTACKER:
+        cd python-engine
+        pip install -r requirements.txt
+        python -m laptop_a.check  --target <DEFENDER-IP>
+        python -m laptop_a.attack --target <DEFENDER-IP> --port 5020
+  The real register write shows up on the same console.
+
+
+------------------------------------------------------------------------------
+  BACKUP PLAN (cannot fail): everything on the defender laptop
+------------------------------------------------------------------------------
+  Run START_DEFENDER.bat, then in a second window:
+        cd attacker-cli
+        npm run dev -- localhost
+  Then type  demo  and show both windows side by side.
+==============================================================================

@@ -105,5 +105,7 @@ export interface IncidentLog {
   safety_loops_preserved: number;
   total_safety_loops: number;
   log_messages: string[];
+  cut_edges?: CutEdge[];       // the actual severed edges, so the console graph can react
+  response_mode?: "safecut" | "quarantine";
 }
 

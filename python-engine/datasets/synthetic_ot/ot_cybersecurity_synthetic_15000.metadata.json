@@ -1,0 +1,27 @@
+{
+  "dataset_name": "SafeCut Synthetic OT Cybersecurity Dataset",
+  "rows": 15000,
+  "columns": 21,
+  "seed": 20261020,
+  "label_column": "label",
+  "label_semantics": {
+    "0": "normal/simulated benign",
+    "1": "simulated attack"
+  },
+  "class_counts": {
+    "normal": 10218,
+    "attack": 4782
+  },
+  "attack_families": {
+    "modbus_write_abuse": 1367,
+    "network_dos": 1199,
+    "sensor_spoofing": 1122,
+    "process_manipulation": 1094
+  },
+  "data_origin": "synthetic; generated from seeded statistical distributions and simulated attack perturbations; not captured from a real OT plant",
+  "limitations": [
+    "Distribution assumptions are authored for this project and may not represent actual industrial systems.",
+    "Test metrics measure generalization within this synthetic generator only.",
+    "Do not interpret the results as real-world operational detection performance or connect the model to automated isolation without separate validation."
+  ]
+}

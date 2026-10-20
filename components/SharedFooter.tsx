@@ -27,7 +27,8 @@ export default function SharedFooter() {
             <li><Link href="/architecture" className="hover:text-primary transition-colors">Architecture</Link></li>
             <li><Link href="/resources" className="hover:text-primary transition-colors">Resources</Link></li>
             <li><Link href="/about" className="hover:text-primary transition-colors">About the Team</Link></li>
-            <li><Link href="/contact" className="hover:text-primary transition-colors">Contact</Link></li>
+            <li><Link href="/console" className="hover:text-primary transition-colors">Defender Console</Link></li>
+            <li><Link href="/ml-lab" className="hover:text-primary transition-colors">ML Lab</Link></li>
           </ul>
         </div>
 

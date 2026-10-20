@@ -1,0 +1,30 @@
+{
+  "name": "safecut-attacker-cli",
+  "version": "1.0.0",
+  "description": "SafeCut Attacker CLI — Terminal-based simulated adversary for OT cybersecurity training",
+  "private": true,
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts"
+  },
+  "keywords": [
+    "cybersecurity",
+    "OT",
+    "ICS",
+    "SafeCut",
+    "attacker",
+    "simulation"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
